@@ -31,9 +31,6 @@ def split_data(train_df, test_size=0.2, random_state=42):
     """Split the dataset into training and validation sets."""
     return train_test_split(train_df, test_size=test_size, random_state=random_state, stratify=train_df['encoded_label'])
 
-import os
-import shutil
-
 def move_images(dataframe, source_dir, dest_dir):
     """
     Moves images into train/val directories based on labels.
