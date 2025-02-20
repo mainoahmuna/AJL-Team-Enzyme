@@ -3,6 +3,8 @@ data/raw/            # Original competition data (large files)
 data/processed/      # Preprocessed images
 data/splits/train_images
 data/splits/test_images
+data/processed/train_images
+data/processed/val_images
 data/augmented/      # Generated augmented images
 models/              # Saved model weights/checkpoints
 configs/secrets/     # API keys/credentials

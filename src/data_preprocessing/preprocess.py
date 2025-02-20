@@ -1,139 +1,121 @@
-import pandas as pd
-import numpy as np
 import os
-from PIL import Image
-from tqdm import tqdm
+import shutil
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-# Configuration
-TRAIN_DIR = "PATH_TO_TRAIN_DIR"
-TEST_DIR = "PATH_TO_TEST_DIR"
-TRAIN_CSV = "PATH_TO_TRAIN_CSV"
-TEST_CSV = "PATH_TO_TEST_CSV"
-IMG_SIZE = (64, 64)
-RANDOM_STATE = 42
-METADATA_FEATURES = ['fitzpatrick_scale', 'ddi_scale']
+def load_csv(file_path):
+    """Load a CSV file into a Pandas DataFrame."""
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+    return pd.read_csv(file_path)
 
-def load_train_data(train_dir, csv_path, img_size):
+def clean_train_data(train_df):
+    """Clean the training dataset by dropping unnecessary columns and handling missing values."""
+    cols_to_drop = ['qc', 'nine_partition_label', 'three_partition_label']
+    train_df.drop(columns=[col for col in cols_to_drop if col in train_df.columns], inplace=True)
+    train_df.dropna(inplace=True)
+    return train_df
+
+def encode_labels(train_df):
+    """Encode categorical labels into numerical values."""
+    if 'label' not in train_df.columns:
+        raise ValueError("Column 'label' not found in train dataset.")
+    
+    label_encoder = LabelEncoder()
+    train_df['encoded_label'] = label_encoder.fit_transform(train_df['label'])
+    return train_df, label_encoder
+
+def split_data(train_df, test_size=0.2, random_state=42):
+    """Split the dataset into training and validation sets."""
+    return train_test_split(train_df, test_size=test_size, random_state=random_state, stratify=train_df['encoded_label'])
+
+import os
+import shutil
+
+def move_images(dataframe, source_dir, dest_dir):
     """
-    Load training data with subfolders and CSV metadata
+    Moves images into train/val directories based on labels.
 
     Parameters:
-    - train_dir (str): Path to the training image folder.
-    - csv_path (str): Path to the CSV file containing metadata.
-    - img_size (tuple): Target size for resizing images.
-    """
-    df = pd.read_csv(csv_path)
-    df['md5hash'] = df['md5hash'].astype(str)
-    metadata_dict = df.set_index('md5hash').to_dict('index')
-    
-    X_images = []
-    X_meta = []
-    y = []
-    class_names = []
-    
-    classes = sorted([d for d in os.listdir(train_dir) 
-                    if os.path.isdir(os.path.join(train_dir, d))])
-    
-    for class_name in classes:
-        class_path = os.path.join(train_dir, class_name)
-        print(f"Processing {class_name}...")
-        
-        for img_file in tqdm(os.listdir(class_path)):
-            md5hash = os.path.splitext(img_file)[0]
-            
-            try:
-                # Get metadata
-                meta = metadata_dict.get(md5hash, None)
-                if not meta:
-                    print(f"\nMetadata missing for {md5hash}")
-                    continue
-                
-                # Verify label consistency
-                if meta['label'] != class_name:
-                    print(f"\nLabel mismatch: {md5hash} CSV:{meta['label']} vs Folder:{class_name}")
-                    continue
-                
-                # Load and process image
-                img_path = os.path.join(class_path, img_file)
-                img = Image.open(img_path)
-                img = img.convert('RGB').resize(img_size)
-                img_array = np.array(img) / 255.0
-                
-                # Store data
-                X_images.append(img_array.flatten())
-                X_meta.append([meta[col] for col in METADATA_FEATURES])
-                y.append(class_name)
-                
-                # Track unique classes
-                if class_name not in class_names:
-                    class_names.append(class_name)
-                    
-            except Exception as e:
-                print(f"\nError processing {img_path}: {str(e)}")
-                continue
-    
-    # Combine image and metadata features
-    X_images = np.array(X_images)
-    X_meta = np.array(X_meta)
-    X_combined = np.hstack([X_images, X_meta])
-    
-    # Create class mapping
-    class_to_idx = {cls: idx for idx, cls in enumerate(sorted(class_names))}
-    y = np.array([class_to_idx[label] for label in y])
-    
-    return X_combined, y, class_names
-
-
-def load_test_data(test_dir, csv_path, img_size):
-    """
-    Load test data from single folder with CSV metadata (no labels).
-
-    Parameters:
-    - test_dir (str): Path to the test image folder.
-    - csv_path (str): Path to the CSV file containing metadata.
-    - img_size (tuple): Target size for resizing images.
+    - dataframe: Pandas DataFrame with 'md5hash' and 'label' columns.
+    - source_dir: Directory containing labeled image folders.
+    - dest_dir: Target directory for train/val split.
 
     Returns:
-    - X_combined (numpy array): Combined image and metadata features.
-    - img_hashes (list): List of MD5 hashes for the test images.
+    - None
     """
-    df = pd.read_csv(csv_path)
-    df['md5hash'] = df['md5hash'].astype(str)
-    metadata_dict = df.set_index('md5hash').to_dict('index')
-    
-    X_images = []
-    X_meta = []
-    img_hashes = []
+    os.makedirs(dest_dir, exist_ok=True)
 
-    print(f"Loading test images from {test_dir}...")
-    for img_file in tqdm(os.listdir(test_dir)):
-        img_path = os.path.join(test_dir, img_file)
-        md5hash = os.path.splitext(img_file)[0]
+    for _, row in dataframe.iterrows():
+        label = row['label']
+        filename = row['md5hash'] + ".jpg"  # Assuming images are JPGs
         
-        try:
-            # Get metadata for the image
-            meta = metadata_dict.get(md5hash, None)
-            if not meta:
-                print(f"\nMetadata missing for {md5hash}")
-                continue
+        src_path = os.path.join(source_dir, label, filename)  # Construct source path
+        label_dest_dir = os.path.join(dest_dir, label)  # Target label folder
+        os.makedirs(label_dest_dir, exist_ok=True)
+        
+        dest_path = os.path.join(label_dest_dir, filename)
 
-            # Load and process the image
-            img = Image.open(img_path)
-            img = img.convert('RGB').resize(img_size)
-            img_array = np.array(img) / 255.0
+        if os.path.exists(src_path):
+            shutil.move(src_path, dest_path)
+        else:
+            print(f"Warning: File {src_path} not found!")  # Debug missing images
 
-            # Store the data
-            X_images.append(img_array.flatten())
-            X_meta.append([meta[col] for col in METADATA_FEATURES])
-            img_hashes.append(md5hash)  # Store filename hash for reference
-            
-        except Exception as e:
-            print(f"\nError processing {img_path}: {str(e)}")
-            continue
+def get_image_generators():
+    """Returns image data generators for training and validation."""
+    train_datagen = ImageDataGenerator(rescale=1./255)
+    val_datagen = ImageDataGenerator(rescale=1./255)
+    return train_datagen, val_datagen
+
+def create_generator(directory, datagen, batch_size=32, target_size=(128, 128)):
+    """
+    Creates an image generator for training or validation.
+
+    Parameters:
+    - directory: Path to the dataset directory where each subdirectory is a label.
+    - datagen: An instance of ImageDataGenerator.
+    - batch_size: Number of images per batch.
+    - target_size: Target size for image resizing.
+
+    Returns:
+    - A generator for model training/validation.
+    """
+    if not isinstance(datagen, ImageDataGenerator):
+        raise TypeError("datagen must be an instance of ImageDataGenerator")
     
-    # Combine features
-    X_images = np.array(X_images)
-    X_meta = np.array(X_meta)
-    X_combined = np.hstack([X_images, X_meta]) if X_meta.size else X_images
+    generator = datagen.flow_from_directory(
+        directory=directory,
+        target_size=target_size,
+        batch_size=batch_size,
+        class_mode="categorical",  # One-hot encoding for labels
+        shuffle=True
+    )
+    return generator
+
+def process_data(train_csv, image_dir, train_dir, val_dir):
+    """Main function to process train dataset and split images into train/val directories."""
+    train_df = load_csv(train_csv)
+    train_df = clean_train_data(train_df)
+    train_df, label_encoder = encode_labels(train_df)
+    train_data, val_data = split_data(train_df)
+
+    # Move images based on split
+    move_images(train_data, image_dir, train_dir)
+    move_images(val_data, image_dir, val_dir)
+
+    train_datagen, val_datagen = get_image_generators()
     
-    return X_combined, img_hashes
+    train_generator = create_generator(train_dir, train_datagen)
+    val_generator = create_generator(val_dir, val_datagen)
+
+    return train_generator, val_generator, label_encoder
+
+if __name__ == "__main__":
+    TRAIN_CSV = "path to train.csv"
+    IMAGE_DIR = "path to image directory"
+    TRAIN_DIR = "path to processed train directory"
+    VAL_DIR = "path to processed val directory"
+
+    train_generator, val_generator, label_encoder = process_data(TRAIN_CSV, IMAGE_DIR, TRAIN_DIR, VAL_DIR)
