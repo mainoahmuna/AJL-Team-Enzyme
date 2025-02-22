@@ -1,8 +1,8 @@
 ### Project-Specific ###
 data/raw/            # Original competition data (large files)
 data/processed/      # Preprocessed images
-data/splits/train_images
-data/splits/test_images
+data/raw/train_images
+data/raw/test_images
 data/processed/train_images
 data/processed/val_images
 data/augmented/      # Generated augmented images
