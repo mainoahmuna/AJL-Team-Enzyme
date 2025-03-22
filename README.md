@@ -15,27 +15,33 @@
 
 ## **🎯 Project Highlights**
 
-**Example:**
-
-* Built a \[insert model type\] using \[techniques used\] to solve \[Kaggle competition task\]
-* Achieved an F1 score of \[insert score\] and a ranking of \[insert ranking out of participating teams\] on the final Kaggle Leaderboard
-* Used \[explainability tool\] to interpret model decisions
-* Implemented \[data preprocessing method\] to optimize results within compute constraints
-
-🔗 [Equitable AI for Dermatology | Kaggle Competition Page](https://www.kaggle.com/competitions/bttai-ajl-2025/overview)
-🔗 [WiDS Datathon 2025 | Kaggle Competition Page](https://www.kaggle.com/competitions/widsdatathon2025/overview)
+* Built a classification model using CNN, and ensemble techniques to improve dermatology AI fairness.
+* Achieved a competitive weighted F1 score of 0.42278 on the Kaggle leaderboard.
+* Implemented data augmentation techniques to balance representation across diverse skin tones.
 
 ---
 
 ## **👩🏽‍💻 Setup & Execution**
 
-**Provide step-by-step instructions so someone else can run your code and reproduce your results. Depending on your setup, include:**
+### **Installation & Setup**
 
-* How to clone the repository
-* How to install dependencies
-* How to set up the environment
-* How to access the dataset(s)
-* How to run the notebook or scripts
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo-name.git
+   cd your-repo-name
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Set up the dataset:
+   - Download the dataset from Kaggle.
+   - Place it in the `data/` directory.
+4. Run the main training script:
+   ```bash
+   python train.py
+   ```
+
 
 ---
 
@@ -70,6 +76,16 @@ The primary dataset for this competition is provided by Kaggle and consists of i
 **Class Imbalance:**
 
 ![image](https://github.com/user-attachments/assets/5dfce175-e414-4579-bca0-f9b0ac8f025a)
+
+To address the class imbalance, we employed a resampling strategy that combined oversampling of minority classes and downsampling of majority classes. The median number of samples per class was used as the target count.
+
+*   **Oversampling:**  For classes with fewer samples than the median, we used `sklearn.utils.resample` with `replace=True` to create additional samples by randomly duplicating existing ones.
+*   **Downsampling:** For classes with more samples than the median, we used `sklearn.utils.resample` with `replace=False` to randomly select a subset of samples, reducing their count to the median.
+
+This approach aims to create a more balanced dataset, preventing the model from being biased towards the majority classes.
+
+**Sample Images:**
+<img width="432" alt="Screenshot 2025-03-22 at 10 47 48 AM" src="https://github.com/user-attachments/assets/dd245e04-a895-4852-b7e2-21c83069950c" />
 
 ---
 
