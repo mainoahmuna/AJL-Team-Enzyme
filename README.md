@@ -9,7 +9,7 @@
 | Khushi Chandra | @chandrakhushi | EDA & Data preprocessing |
 | Dureti Shemsi | @DuretiShemsi | Built, Trained & Tested CNN Model, Data augmentation |
 | Victoria Worthington | @VicaWorth | EDA & Feature Engineering, Training & Testing CNN Model |
-| Mainoah Muna | @mainoahmuna | Setup Github & Evaluation Metrics, Trained Baseline Model (Logistic Regression), Trained Ensemble Methods Model |
+| Mainoah Muna | @mainoahmuna | Evaluation Metrics, Trained Baseline Model (Logistic Regression) |
 
 ---
 
