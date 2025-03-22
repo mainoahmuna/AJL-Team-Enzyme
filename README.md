@@ -37,11 +37,7 @@
 3. Set up the dataset:
    - Download the dataset from Kaggle.
    - Place it in the `data/` directory.
-4. Run the main training script:
-   ```bash
-   python train.py
-   ```
-
+4. Run any of the models we have trained (logistic_regression.py, cnn.py)
 
 ---
 
