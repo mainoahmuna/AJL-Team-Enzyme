@@ -85,6 +85,7 @@ To address the class imbalance, we employed a resampling strategy that combined 
 This approach aims to create a more balanced dataset, preventing the model from being biased towards the majority classes.
 
 **Sample Images:**
+
 <img width="432" alt="Screenshot 2025-03-22 at 10 47 48 AM" src="https://github.com/user-attachments/assets/dd245e04-a895-4852-b7e2-21c83069950c" />
 
 ---
