@@ -3,6 +3,7 @@ data/raw/            # Original competition data (large files)
 data/processed/      # Preprocessed images
 data/raw/train_images
 data/raw/test_images
+data/predictions
 data/processed/train_images
 data/processed/val_images
 data/augmented/      # Generated augmented images
